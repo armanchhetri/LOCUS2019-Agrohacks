@@ -1,0 +1,17 @@
+[
+    {
+        "crop": "Millet",
+        "season": "Summer",
+        "description": "It is grass like crop mainly grown in subtropical regions. Flour of it is used in food"
+    },
+    {
+        "crop": "Corn",
+        "season": "winter",
+        "description": "it is tall crop mainly grown in tropical regions. It is used to make popcorns"
+    },
+    {
+        "crop": "Sugar",
+        "season": "Summer",
+        "description": "likecropmainlygrownin"
+    }
+] 
