@@ -22,7 +22,7 @@ def verify_password(username, password):
 def home():
     if 'username' in session:
         username=session['username']
-        return jsonify({"hello":"You are logged in!"})
+        return jsonify({"Username":username})
     return jsonify('message':"Please login")
 
 @app.route("/login", methods=['POST'])
