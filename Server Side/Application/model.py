@@ -9,8 +9,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     username = db.Column(db.String(32), index = True)
     password_hash = db.Column(db.String(128))
-    email = db.Column(db.string(32))
-    district = db.relationship("Districts")
+    # email = db.Column(db.string(32))
+    # district = db.relationship("Districts")
 
     def hash_password(self, password):
         self.password_hash = pwd_context.encrypt(password)
