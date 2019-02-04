@@ -26,8 +26,8 @@ class User(db.Model):
     password_hash = db.Column(db.String(128))
     email = db.Column(db.String(32))
     contactno = db.Column(db.String(10),nullable = False)
-    location_id = db.Column(db.Integer,db.ForeignKey('districts.id'))
-    location = db.relationship('Districts')
+    # location_id = db.Column(db.Integer,db.ForeignKey('districts.id'))
+    # location = db.relationship('Districts')
     districtName = db.Column(db.String(15),nullable = False)
     def hash_password(self, password):
         self.password_hash = pwd_context.encrypt(password)

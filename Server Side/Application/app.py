@@ -1,17 +1,14 @@
-from models import User
+from models import User,app, db
 from flask_httpauth import HTTPBasicAuth
 
 from flask import Flask, jsonify, make_response,abort,request,session,url_for
 from flask_restful import Resource, Api
-
-app = Flask(__name__)
+from passlib.apps import custom_app_context as pwd_context
+# app = Flask(__name__)
 auth = HTTPBasicAuth()
 
-# from flask_sqlalchemy import SQLAlchemy
-# from passlib.apps import custom_app_context as pwd_context
-#
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///user.sqlite3'
-db = SQLAlchemy(app)
+
+# db = SQLAlchemy(app)
 
 @auth.verify_password
 def verify_password(username, password):
@@ -21,7 +18,7 @@ def verify_password(username, password):
     # g.user = user
     return True
 
-@app.route("/api/home",methods=['GET'])
+@app.route("/home",methods=['GET'])
 def home():
     if 'username' in session:
         username=session['username']
@@ -34,19 +31,26 @@ def login():
     password=request.json.get('password')
     if username is None or password is None:
         abort(400) # missing arguments
-    logged_user= User.query.filter_by(username=username).first()
-    session['username']=logged_user.username
-    session['password']=logged_user.password_hash
-    return jsonify({'username':username})
-@app.route('/api/sign-up', methods = ['POST'])
+
+    if verify_password(username, password):
+        session['username']=username
+        return jsonify({'username':username})
+
+    return jsonify({'message':"Invalid Details"})
+@app.route('/sign-up', methods = ['POST'])
 def new_user():
+    firstname = request.json.get('firstname')
+    lastname = request.json.get('lastname')
+    email = request.json.get('email')
+    contactno=request.json.get('contactno')
     username = request.json.get('username')
     password = request.json.get('password')
-    if username is None or password is None:
+    districtName = request.json.get('districtname')
+    if username is None or password is None or firstname is None or email is None:
         abort(400) # missing arguments
     if User.query.filter_by(username = username).first() is not None:
         abort(400) # existing user
-    user = User(username = username)
+    user = User(firstname=firstname,lastname=lastname,email=email,contactno=contactno,districtName=districtName,username = username)
     user.hash_password(password)
     db.session.add(user)
     db.session.commit()
