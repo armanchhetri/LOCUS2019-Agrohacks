@@ -80,3 +80,26 @@ class Constraints(db.Model):
         self.ManLabour=ManLabour
         self.demand=demand
         self.dairy= dairy
+
+
+class Irrigations(db.Model):
+    __tablename__ = 'IrrigationModel'
+    id = db.Column(db.Integer, primary_key = True)
+    user = db.Column(db.Integer, db.ForeignKey("user.id"))
+    water_reserve_effective = db.Column(db.Float)
+    water_reserve_maximum = db.Column(db.Float)
+    irrigationMax = db.Column(db.Float)
+    soil_moisture = db.Column(db.Float)
+    rainfall = db.Column(db.Float)
+
+    def needed_water(self):
+        pass
+    def irrigation_water(self):
+        pass
+    def __init__(self, water_reserve_effective,water_reserve_maximum,soil_moisture,rainfall,user):
+        self.user = user
+        self.water_reserve_effective = water_reserve_effective
+        self.water_reserve_maximum = water_reserve_maximum
+        self.soil_moisture = soil_moisture
+        self.rainfall = rainfall
+        
