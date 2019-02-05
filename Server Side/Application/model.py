@@ -29,6 +29,7 @@ class User(db.Model):
     # location_id = db.Column(db.Integer,db.ForeignKey('districts.id'))
     # location = db.relationship('Districts')
     districtName = db.Column(db.String(15),nullable = False)
+    dairy = db.relationship("Dairy", backref="users")
     def hash_password(self, password):
         self.password_hash = pwd_context.encrypt(password)
 
@@ -47,3 +48,35 @@ class UserSchema(ma.Schema):
         fields = ['firstname','lastname','username','email','contactno','districtName']
 
 User_Schema = UserSchema(strict = True)
+
+class Dairy(db.Model):
+    # __tablename__ = 'dairy'
+
+    id = db.Column(db.Integer, primary_key = True)
+    decision_var =db.Column(db.String(32),nullable=False)
+    constraint =db.relationship("Constraints",backref="daire")
+    # cheese =db.relationship("Constraints",backref="dairy.cheese")
+    # curd =db.relationship("Constraints",backref="dairy.curd")
+    #available= db.relationship("Constraints",backref="dairy.available")
+    user = db.Column(db.Integer, db.ForeignKey("user.id"))
+    def __init__(self,decision_var,user):
+        self.decision_var=decision_var
+        self.user =user
+
+
+
+class Constraints(db.Model):
+    # __tablename__ = 'constraints'
+
+    id = db.Column(db.Integer, primary_key = True)
+    ProCost =db.Column(db.Integer)
+    Time =db.Column(db.Integer)
+    ManLabour =db.Column(db.Integer)
+    demand=db.Column(db.Integer)
+    dairy = db.Column(db.Integer, db.ForeignKey("dairy.id"))
+    def __init__(self, ProCost,Time,ManLabour,demand,dairy):
+        self.ProCost=ProCost
+        self.Time= Time
+        self.ManLabour=ManLabour
+        self.demand=demand
+        self.dairy= dairy
