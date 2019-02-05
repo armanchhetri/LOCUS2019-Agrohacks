@@ -18,7 +18,7 @@ ma = Marshmallow(app)
 
 #Database Model
 class User(db.Model):
-    __tablename__ = 'users'
+    #__tablename__ = 'users'
     id = db.Column(db.Integer, primary_key = True)
     firstname = db.Column(db.String(32))
     lastname = db.Column(db.String(32))
@@ -26,7 +26,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(128))
     email = db.Column(db.String(32))
     contactno = db.Column(db.String(10),nullable = False)
-    # location_id = db.Column(db.Integer,db.ForeignKey('districts.id'))
+    # location_id = db.C    olumn(db.Integer,db.ForeignKey('districts.id'))
     # location = db.relationship('Districts')
     districtName = db.Column(db.String(15),nullable = False)
     dairy = db.relationship("Dairy", backref="users")
@@ -37,7 +37,7 @@ class User(db.Model):
         return pwd_context.verify(password, self.password_hash)
 
 class Districts(db.Model):
-    __tablename__ = 'districts'
+    #__tablename__ = 'districts'
     id = db.Column(db.Integer, primary_key = True)
     name = db.Column(db.String(15),nullable = False)
 
@@ -69,3 +69,38 @@ class Dairy(db.Model):
         self.curd=curd
         self.bound=bound
         self.user=user
+
+
+
+class Irrigations(db.Model):
+    #__tablename__ = 'IrrigationModel'
+    id = db.Column(db.Integer, primary_key = True)
+    user = db.Column(db.Integer, db.ForeignKey("user.id"))
+    water_reserve_effective = db.Column(db.Float)
+    water_reserve_maximum = db.Column(db.Float)
+    irrigationMax = db.Column(db.Float)
+    soil_moisture = db.Column(db.Float)
+    rainfall = db.Column(db.Float)
+
+    def needed_water(self):
+        pass
+    def irrigation_water(self):
+        pass
+    def __init__(self, water_reserve_effective,water_reserve_maximum,soil_moisture,rainfall,user):
+        self.user = user
+        self.water_reserve_effective = water_reserve_effective
+        self.water_reserve_maximum = water_reserve_maximum
+        self.soil_moisture = soil_moisture
+        self.rainfall = rainfall
+    def update(self, water_reserve_effective,water_reserve_maximum,soil_moisture,rainfall):
+        self.water_reserve_effective = water_reserve_effective
+        self.water_reserve_maximum = water_reserve_maximum
+        self.soil_moisture = soil_moisture
+        self.rainfall = rainfall
+        
+
+class IrrigationSchema(ma.Schema):
+    class Meta:
+        fields = ['water_reserve_effective','water_reserve_maximum','soil_moisture','rainfall']
+
+Irrigation_Schema = IrrigationSchema(strict = True)
