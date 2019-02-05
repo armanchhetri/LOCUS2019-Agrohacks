@@ -18,7 +18,7 @@ ma = Marshmallow(app)
 
 #Database Model
 class User(db.Model):
-    __tablename__ = 'users'
+    #__tablename__ = 'users'
     id = db.Column(db.Integer, primary_key = True)
     firstname = db.Column(db.String(32))
     lastname = db.Column(db.String(32))
@@ -37,7 +37,7 @@ class User(db.Model):
         return pwd_context.verify(password, self.password_hash)
 
 class Districts(db.Model):
-    __tablename__ = 'districts'
+    #__tablename__ = 'districts'
     id = db.Column(db.Integer, primary_key = True)
     name = db.Column(db.String(15),nullable = False)
 
@@ -49,41 +49,31 @@ class UserSchema(ma.Schema):
 
 User_Schema = UserSchema(strict = True)
 
+
 class Dairy(db.Model):
     # __tablename__ = 'dairy'
 
     id = db.Column(db.Integer, primary_key = True)
-    decision_var =db.Column(db.String(32),nullable=False)
-    constraint =db.relationship("Constraints",backref="daire")
-    # cheese =db.relationship("Constraints",backref="dairy.cheese")
-    # curd =db.relationship("Constraints",backref="dairy.curd")
-    #available= db.relationship("Constraints",backref="dairy.available")
+    constraints=db.Column(db.String(32),nullable=False)
+    milk=db.Column(db.Integer,nullable=False)
+    cheese=db.Column(db.Integer,nullable=False)
+    ghee=db.Column(db.Integer,nullable=False)
+    curd=db.Column(db.Integer,nullable=False)
+    bound=db.Column(db.Integer,nullable=False)
     user = db.Column(db.Integer, db.ForeignKey("user.id"))
-    def __init__(self,decision_var,user):
-        self.decision_var=decision_var
-        self.user =user
+    def __init__(self,constraints,milk,cheese,ghee,curd,bound,user):
+        self.constraints=constraints
+        self.milk=milk
+        self.cheese=cheese
+        self.ghee=ghee
+        self.curd=curd
+        self.bound=bound
+        self.user=user
 
-
-
-class Constraints(db.Model):
-    # __tablename__ = 'constraints'
-
-    id = db.Column(db.Integer, primary_key = True)
-    ProCost =db.Column(db.Integer)
-    Time =db.Column(db.Integer)
-    ManLabour =db.Column(db.Integer)
-    demand=db.Column(db.Integer)
-    dairy = db.Column(db.Integer, db.ForeignKey("dairy.id"))
-    def __init__(self, ProCost,Time,ManLabour,demand,dairy):
-        self.ProCost=ProCost
-        self.Time= Time
-        self.ManLabour=ManLabour
-        self.demand=demand
-        self.dairy= dairy
 
 
 class Irrigations(db.Model):
-    __tablename__ = 'IrrigationModel'
+    #__tablename__ = 'IrrigationModel'
     id = db.Column(db.Integer, primary_key = True)
     user = db.Column(db.Integer, db.ForeignKey("user.id"))
     water_reserve_effective = db.Column(db.Float)
