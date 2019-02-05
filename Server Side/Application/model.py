@@ -60,9 +60,8 @@ class Dairy(db.Model):
     ghee=db.Column(db.Integer,nullable=False)
     curd=db.Column(db.Integer,nullable=False)
     bound=db.Column(db.Integer,nullable=False)
-
     user = db.Column(db.Integer, db.ForeignKey("user.id"))
-    def __init__(self,constraints,milk,cheese,ghee,curd,bound,user):
+    def __init__(self,milk,cheese,ghee,curd,bound,user):
         self.constraints=constraints
         self.milk=milk
         self.cheese=cheese
