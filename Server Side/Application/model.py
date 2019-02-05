@@ -26,7 +26,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(128))
     email = db.Column(db.String(32))
     contactno = db.Column(db.String(10),nullable = False)
-    # location_id = db.Column(db.Integer,db.ForeignKey('districts.id'))
+    # location_id = db.C    olumn(db.Integer,db.ForeignKey('districts.id'))
     # location = db.relationship('Districts')
     districtName = db.Column(db.String(15),nullable = False)
     dairy = db.relationship("Dairy", backref="users")
@@ -92,4 +92,15 @@ class Irrigations(db.Model):
         self.water_reserve_maximum = water_reserve_maximum
         self.soil_moisture = soil_moisture
         self.rainfall = rainfall
+    def update(self, water_reserve_effective,water_reserve_maximum,soil_moisture,rainfall):
+        self.water_reserve_effective = water_reserve_effective
+        self.water_reserve_maximum = water_reserve_maximum
+        self.soil_moisture = soil_moisture
+        self.rainfall = rainfall
         
+
+class IrrigationSchema(ma.Schema):
+    class Meta:
+        fields = ['water_reserve_effective','water_reserve_maximum','soil_moisture','rainfall']
+
+Irrigation_Schema = IrrigationSchema(strict = True)
