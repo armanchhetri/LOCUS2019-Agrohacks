@@ -3,6 +3,7 @@ from model import User, db, app, Irrigations, Irrigation_Schema, Dairy
 from flask_httpauth import HTTPBasicAuth
 from flask import Flask, jsonify, make_response,abort,request,session,url_for
 from passlib.apps import custom_app_context as pwd_context
+from LPP import IrrigationOptimize
 
 #Init App and Auth
 auth = HTTPBasicAuth()
@@ -82,11 +83,6 @@ def modify_user(id):
     db.session.commit()
     return jsonify({ 'username': user.username,'firstname':user.firstname,'lastname':user.lastname,'contact':user.contactno,'email':user.email }), 201
 
-
-
-
-
-
 #To update data
 @app.route('/dairy/update',methods=["PUT"])
 def Dairy_update():
@@ -129,7 +125,7 @@ def Dairy_update():
             db.session.commit()
             return jsonify(data)
 
-
+#For Creating User Irrigation databases
 @app.route('/user/irrigation/<id>', methods = ['POST'])
 def create_irrigation(id):
     user = request.json.get('id')
@@ -142,7 +138,6 @@ def create_irrigation(id):
     db.session.commit()
 
     return Irrigation_Schema.jsonify(irrigation)
-
 
 #for Updating User Databases
 @app.route('/user/irrigation/<id>', methods = ['PUT'])
@@ -159,6 +154,28 @@ def update_irrigation(id):
     #irrigation.update(water_reserve_effective, water_reserve_maximum, soil_moisture, rainfall)
     db.session.commit()
     return Irrigation_Schema.jsonify(irrigation)
+
+#Calculation of Irrigation Problem
+@app.route('/user/irrigation/calculation/<id>', methods = ['POST'])
+def irrigationOpti(id):
+    crops = request.json.get('crops')
+    areas = request.json.get('Area')
+    drainage = request.json.get('Drainage')
+    Irrigation = Irrigations.query.filter_by(user = id).first()
+    data =  {
+        'crops':crops,
+        'Area':areas,
+        'ResW':Irrigation.water_reserve_effective,
+        'RainW':Irrigation.rainfall,
+        'RainWM':Irrigation.rainfall,
+        'SM':Irrigation.soil_moisture,
+        'DW':drainage,
+        'NW':[100,30],
+        'ResWM':400,
+        'IW':12000
+    }
+    result = IrrigationOptimize(data)
+    return jsonify(result)
 
 #Run Server
 if __name__ == '__main__':

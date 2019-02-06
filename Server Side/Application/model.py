@@ -41,7 +41,6 @@ class Districts(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     name = db.Column(db.String(15),nullable = False)
 
-
 #Marshmallow Serializer
 class UserSchema(ma.Schema):
     class Meta:
@@ -69,7 +68,6 @@ class Dairy(db.Model):
         self.curd=curd
         self.bound=bound
         self.user=user
-
 
 
 class Irrigations(db.Model):
