@@ -1,6 +1,6 @@
 from pulp import *
 
-from model import User, Dairy
+from model import User, Dairy, Crops
 def solve_dairy(user_id, bound):
     prob = LpProblem("Dairy", LpMaximize)
     x1 = LpVariable("x1",lowBound=0)
@@ -78,3 +78,23 @@ data = {
 }
 
 #IrrigationOptimize(data)
+
+def Neededwater(crop,stages):
+    try:
+        valueCrop = Crops.query.filter_by(Name = crop).first()
+        water = valueCrop.water_requirement
+    except:
+        return 10
+    Neededwater =  water/1000
+    rootdepth_seedling = valueCrop.rootdepth_seedling
+    rootdepth_vegetative = valueCrop.rootdepth_vegetative
+    rootdepth_flowing = valueCrop.rootdepth_flowing
+    if stages == 1:
+        return (Neededwater/rootdepth_flowing)
+    elif stages == 2:
+        return  (Neededwater/rootdepth_seedling)
+    else:
+        return (Neededwater/rootdepth_vegetative)
+        
+
+   
