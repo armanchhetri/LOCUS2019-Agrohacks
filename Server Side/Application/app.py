@@ -3,7 +3,7 @@ from model import User, db, app, Irrigations, Irrigation_Schema, Dairy, Crops, C
 from flask_httpauth import HTTPBasicAuth
 from flask import Flask, jsonify, make_response,abort,request,session,url_for
 from passlib.apps import custom_app_context as pwd_context
-from lpp import IrrigationOptimize, solve_dairy, Neededwater
+from lpp import IrrigationOptimize, solve_dairy, Neededwater, conversionSoilMoisture, conversionRainwater, conversionValue
 
 #Init App and Auth
 auth = HTTPBasicAuth()
@@ -12,7 +12,8 @@ app.config['SESSION_TYPE'] = 'memcached'
 
 @auth.verify_password
 def verify_password(username, password):
-    user = User.query.filter_by(username = username).first()
+    user = User.query.filter_by(username = username
+    ).first()
     if not user or not user.verify_password(password):
         return False
     return True
@@ -199,14 +200,14 @@ def irrigationOpti():
     data =  {
         'crops':crops,
         'Area':areas,
-        'ResW':Irrigation.water_reserve_effective,
-        'RainW':request.json.get('rainfall') if request.json.get('rainfall') else Irrigation.rainfall,
-        'RainWM':request.json.get('rainfall') if request.json.get('rainfall') else Irrigation.rainfall,
-        'SM':request.json.get('soilmoisture') if request.json.get('soilmoisture') else Irrigation.soil_moisture,
+        'ResW':request.json.get('waterReserveEffective') if request.json.get('waterReserveEffective') else Irrigation.water_reserve_effective,
+        'RainW':[conversionValue(request.json.get('rainfall'),var,var2) for var,var2 in zip(crops,stages)]if request.json.get('rainfall') else [conversionRainwater(var,var2) for var,var2 in zip(crops,stages)],
+        'RainWM':[conversionValue(request.json.get('rainfall'),var,var2) for var,var2 in zip(crops,stages)] if request.json.get('rainfall') else [conversionRainwater(var,var2) for var,var2 in zip(crops,stages)],
+        'SM':[conversionValue(request.json.get('soilmoisture'),var,var2) for var,var2 in zip(crops,stages)] if request.json.get('soilmoisture') else [conversionSoilMoisture(var,var2) for var,var2 in zip(crops,stages)],
         'DW':drainage,
         'NW':[Neededwater(var,var2) for var,var2 in zip(crops,stages)],
-        'ResWM':Irrigation.water_reserve_maximum,
-        'IW':Irrigation.irrigationMax
+        'ResWM':request.json.get('waterReserveMaximum') if request.json.get('waterReserveMaximum') else Irrigation.water_reserve_maximum,
+        'IW':request.json.get('irrigationMax') if request.json.get('irrigationMax') else Irrigation.irrigationMax
     }
     result = IrrigationOptimize(data)
     return jsonify(result)

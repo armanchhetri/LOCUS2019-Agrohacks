@@ -47,22 +47,25 @@ def IrrigationOptimize(data):
     x2 = LpVariable(data['crops'][1])
     Lp_Problem += data['Area'][0] * x1 + data['Area'][1] * x2 <= data['IW']
     Lp_Problem += x1 + x2 , "Z"
-    Lp_Problem += x1 >= data['ResW'] -data['RainW'] - data['SM'] + data['DW']
-    Lp_Problem += x1 <= data['ResWM'] -data['RainW'] - data['SM'] + data['DW']
-    Lp_Problem += data['RainWM'] + data['SM'] + x1 - data['DW'] >= data['NW'][0]
-    Lp_Problem += x2 >= data['ResW'] -data['RainW'] - data['SM'] + data['DW']
-    Lp_Problem += x2 <= data['ResWM'] -data['RainW'] - data['SM'] + data['DW']
-    Lp_Problem += data['RainWM'] + data['SM'] + x2 - data['DW'] >= data['NW'][1]
+    Lp_Problem += x1 >= data['ResW'] - data['RainW'][0] - data['SM'][0] + data['DW']
+    Lp_Problem += x1 <= data['ResWM'] -data['RainW'][0] - data['SM'][0] + data['DW']
+    Lp_Problem += data['RainWM'][0] + data['SM'][0] + x1 - data['DW'] >= data['NW'][0]
+    Lp_Problem += x2 >= data['ResW'] -data['RainW'][1] - data['SM'][1] + data['DW']
+    Lp_Problem += x2 <= data['ResWM'] -data['RainW'][1] - data['SM'][1] + data['DW']
+    Lp_Problem += data['RainWM'][1] + data['SM'][1] + x2 - data['DW'] >= data['NW'][1]
    # print(Lp_Problem)
    # print(LpStatus[Lp_Problem.status])
     Lp_Problem.solve()
     ProblemStatus = LpStatus[Lp_Problem.status]
     ObjectiveValue = pulp.value(Lp_Problem.objective)
     variable = {}
+    totalVariable = {}
+    i=0
     for var in Lp_Problem.variables():
         variable[var.name] = var.varValue
-
-    return ({'Status':ProblemStatus,'ObjectiveValue':ObjectiveValue,'Values':variable })
+        totalVariable[var.name] = var.varValue * data['Area'][i]
+        i = i + 1
+    return ({'Status':ProblemStatus,'ObjectiveValue':ObjectiveValue,'Values':variable,'TotalValues':totalVariable })
 
 data = {
     'crops':['Alu','Peda'],
@@ -95,6 +98,61 @@ def Neededwater(crop,stages):
         return  (Neededwater/rootdepth_seedling)
     else:
         return (Neededwater/rootdepth_vegetative)
+
+def conversionSoilMoisture(crop,stages):
+    try:
+        valueCrop = Crops.query.filter_by(Name = crop).first()
+        water = valueCrop.soil_moisture
+    except:
+        return 10
+    Neededwater =  water/1000
+    rootdepth_seedling = valueCrop.rootdepth_seedling
+    rootdepth_vegetative = valueCrop.rootdepth_vegetative
+    rootdepth_flowing = valueCrop.rootdepth_flowing
+    if stages == 1:
+        return (Neededwater/rootdepth_flowing)
+    elif stages == 2:
+        return  (Neededwater/rootdepth_seedling)
+    else:
+        return (Neededwater/rootdepth_vegetative)
+
+def conversionValue(value,stages,crop):
+    try:
+        valueCrop = Crops.query.filter_by(Name = crop).first()
+        water = value
+    except:
+        return value/2000
+    Neededwater =  water/1000
+    rootdepth_seedling = valueCrop.rootdepth_seedling
+    rootdepth_vegetative = valueCrop.rootdepth_vegetative
+    rootdepth_flowing = valueCrop.rootdepth_flowing
+    if stages == 1:
+        return (Neededwater/rootdepth_flowing)
+    elif stages == 2:
+        return  (Neededwater/rootdepth_seedling)
+    else:
+        return (Neededwater/rootdepth_vegetative)
+
+def conversionRainwater(crop,stages):
+    try:
+        valueCrop = Crops.query.filter_by(Name = crop).first()
+        water = valueCrop.rainfall
+    except:
+        return 0.0
+    Neededwater =  water/1000
+    rootdepth_seedling = valueCrop.rootdepth_seedling
+    rootdepth_vegetative = valueCrop.rootdepth_vegetative
+    rootdepth_flowing = valueCrop.rootdepth_flowing
+    if stages == 1:
+        return (Neededwater/rootdepth_flowing)
+    elif stages == 2:
+        return  (Neededwater/rootdepth_seedling)
+    else:
+        return (Neededwater/rootdepth_vegetative)
+
+
+    
+
         
 
    
