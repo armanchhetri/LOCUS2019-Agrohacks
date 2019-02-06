@@ -3,7 +3,7 @@ from model import User, db, app, Irrigations, Irrigation_Schema, Dairy
 from flask_httpauth import HTTPBasicAuth
 from flask import Flask, jsonify, make_response,abort,request,session,url_for
 from passlib.apps import custom_app_context as pwd_context
-from LPP import IrrigationOptimize, solve_dairy
+from lpp import IrrigationOptimize, solve_dairy
 
 #Init App and Auth
 auth = HTTPBasicAuth()
@@ -22,9 +22,9 @@ def verify_password(username, password):
 def home():
     if 'username' in session:
         username=session['username']
-        return jsonify({"Username":username})
+        return jsonify({"status":True})
     else:
-        return jsonify({'message':"Please login"})
+        return jsonify({"status":False})
 
 @app.route("/login", methods=['POST'])
 def login():
@@ -202,9 +202,9 @@ def irrigationOpti(id):
         'RainWM':Irrigation.rainfall,
         'SM':Irrigation.soil_moisture,
         'DW':drainage,
-        'NW':[100,30],
-        'ResWM':400,
-        'IW':12000
+        'NW':[40,400],
+        'ResWM':600,
+        'IW':15000
     }
     result = IrrigationOptimize(data)
     return jsonify(result)
@@ -212,4 +212,4 @@ def irrigationOpti(id):
 #Run Server
 if __name__ == '__main__':
     db.create_all()
-    app.run(host='0.0.0.0',port='5000' )
+    app.run(host='0.0.0.0',port='5000',debug=True )
