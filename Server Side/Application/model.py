@@ -166,7 +166,7 @@ class Dairy(db.Model):
     curd=db.Column(db.Integer,nullable=False)
     # bound=db.Column(db.Integer,nullable=False)
     user = db.Column(db.Integer, db.ForeignKey("user.id"))
-    def __init__(self,milk,ghee,curd,cheese,user):
+    def __init__(self,constraints,milk,ghee,curd,cheese,user):
         self.constraints=constraints
         self.milk=milk
         self.ghee=ghee
@@ -174,6 +174,13 @@ class Dairy(db.Model):
         self.cheese=cheese
         # self.bound=bound
         self.user=user
+
+    def update(self,milk,ghee,curd,cheese):
+        self.milk=milk
+        self.ghee=ghee
+        self.curd=curd
+        self.cheese=cheese
+        # self.bound=bound
 
 
 class Irrigations(db.Model):
