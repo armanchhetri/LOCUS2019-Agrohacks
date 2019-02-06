@@ -3,7 +3,7 @@ from model import User, db, app, Irrigations, Irrigation_Schema, Dairy
 from flask_httpauth import HTTPBasicAuth
 from flask import Flask, jsonify, make_response,abort,request,session,url_for
 from passlib.apps import custom_app_context as pwd_context
-
+from lpp import solve_dairy
 #Init App and Auth
 auth = HTTPBasicAuth()
 app.config['SECRET_KEY'] = 'ManishBhai'
@@ -82,23 +82,18 @@ def modify_user(id):
     db.session.commit()
     return jsonify({ 'username': user.username,'firstname':user.firstname,'lastname':user.lastname,'contact':user.contactno,'email':user.email }), 201
 
-
-
-
-
-
 #To update data
-@app.route('/dairy/update',methods=["PUT"])
-def Dairy_update():
+@app.route('/dairy/update/<id>',methods=["PUT"])
+def Dairy_update(id):
     # if not request.json:
     #     abort(400)
     if 'username' in session:
         username=session['username']
-        data=request.json.get()
-        user=User.query.filter_by(username=username).first()
-        if Dairy.query.filter_by(user=user.id).first():
-            dairy=Dairy.query.filter_by(user=user.id).first()
-            for i in range(4):
+        data=request.json
+        # user=User.query.filter_by(id=id).first()
+        if Dairy.query.filter_by(user=id).first():
+            dairy=Dairy.query.filter_by(user=id)
+            for i in range(3):
                 j=0
                 dairy[i].milk=data[i][j]
                 j=j+1
@@ -107,13 +102,12 @@ def Dairy_update():
                 dairy[i].curd=data[i][j]
                 j=j+1
                 dairy[i].cheese=data[i][j]
-                j=j+1
-                dairy[i].bound=data[i][j]
+
             db.session.commit()
             return jsonify(data)
 
         else:
-            for i in range(4):
+            for i in range(3):
                 j=0
                 milk=data[i][j]
                 j=j+1
@@ -122,12 +116,27 @@ def Dairy_update():
                 curd=data[i][j]
                 j=j+1
                 cheese=data[i][j]
-                j=j+1
-                bound=data[i][j]
-                dairy=Dairy("Costraint",milk,ghee,curd,cheese,bound)
+                #j=j+1
+                #bound=data[i][j]
+                dairy=Dairy("Costraint",milk,ghee,curd,cheese,id)
                 db.session.add(dairy)
+
             db.session.commit()
             return jsonify(data)
+
+        return jsonify({"message":"login please"})
+
+#Implement
+@app.route('/dairy/solve/<id>',methods=['POST'])
+def solve(id):
+    data=request.json
+    if "profit" in data:
+        profit=Dairy("profit",data["profit"][0],data["profit"][1],data["profit"][2],data["profit"][3],id)
+        db.session.add(profit)
+        db.session.commit()
+    bound=data["bound"]
+    result=solve_dairy(id, bound)
+    return jsonify(result)
 
 
 @app.route('/user/irrigation/<id>', methods = ['POST'])
