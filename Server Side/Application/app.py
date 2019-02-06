@@ -42,8 +42,9 @@ def login():
 @app.route('/logout')
 def logout():
    # remove the username from the session if it is there
+
    session.pop('username', None)
-   return redirect(url_for('home'))
+   return jsonify({"message":"logged out"})
 
 
 @app.route('/sign-up', methods = ['POST'])
@@ -131,11 +132,27 @@ def Dairy_update(id):
 @app.route('/dairy/solve/<id>',methods=['POST'])
 def solve(id):
     data=request.json
-    if "profit" in data:
-        profit=Dairy("profit",data["profit"][0],data["profit"][1],data["profit"][2],data["profit"][3],id)
-        db.session.add(profit)
-        db.session.commit()
-    bound=data["bound"]
+    if request.json.get("profit"):
+        if Dairy.query.filter_by(constraints="profit", user=id).first():
+            todata=Dairy.query.filter_by(constraints="profit" , user=id).first()
+            profit=request.json.get("profit")
+            todata.milk=profit[0]
+            todata.ghee=profit[1]
+            todata.curd= profit[2]
+            todata.cheese=profit[3]
+            print("updated not")
+            db.session.commit()
+            print("updated now")
+
+        else:
+            if data["profit"][0]==None:
+                abort(400)
+
+            profit=Dairy("profit",data["profit"][0],data["profit"][1],data["profit"][2],data["profit"][3],id)
+            db.session.add(profit)
+            db.session.commit()
+
+    bound=request.json.get("bound")
     result=solve_dairy(id, bound)
     return jsonify(result)
 
@@ -195,4 +212,4 @@ def irrigationOpti(id):
 #Run Server
 if __name__ == '__main__':
     db.create_all()
-    app.run(debug=True )
+    app.run(host='0.0.0.0',port='5000' )
