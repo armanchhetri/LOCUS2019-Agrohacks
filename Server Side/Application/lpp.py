@@ -24,7 +24,7 @@ def solve_dairy(user_id, bound):
         return result
 
     else:
-        return "No optimal solution"
+        return False
 
 
 
@@ -95,6 +95,3 @@ def Neededwater(crop,stages):
         return  (Neededwater/rootdepth_seedling)
     else:
         return (Neededwater/rootdepth_vegetative)
-        
-
-   

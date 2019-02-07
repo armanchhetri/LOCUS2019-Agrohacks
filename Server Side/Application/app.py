@@ -1,14 +1,15 @@
 #importing modules
-from model import User, db, app, Irrigations, Irrigation_Schema, Dairy, Crops, Crops_Schema
+from model import User, db, app, Irrigations, Irrigation_Schema, Dairy
 from flask_httpauth import HTTPBasicAuth
 from flask import Flask, jsonify, make_response,abort,request,session,url_for
 from passlib.apps import custom_app_context as pwd_context
-from lpp import IrrigationOptimize, solve_dairy, Neededwater
+from lpp import IrrigationOptimize, solve_dairy
 
 #Init App and Auth
 auth = HTTPBasicAuth()
 app.config['SECRET_KEY'] = 'ManishBhai'
 app.config['SESSION_TYPE'] = 'memcached'
+
 
 @auth.verify_password
 def verify_password(username, password):
@@ -17,7 +18,7 @@ def verify_password(username, password):
         return False
     return True
 
-@app.route("/verify",methods=['GET'])
+@app.route("/home",methods=['GET'])
 def home():
     if 'username' in session:
         username=session['username']
@@ -34,14 +35,14 @@ def login():
 
     if verify_password(username, password):
         session['username']=username
-        user_detail = User.query.filter_by(username = username).first()
-        return jsonify({'status':True,"id":user_detail.id})
+        return jsonify({'username':username})
 
-    return jsonify({'Message':"Invalid Details"})
+    return jsonify({'message':"Invalid Details"})
 
 @app.route('/logout')
 def logout():
    # remove the username from the session if it is there
+
    session.pop('username', None)
    return jsonify({"message":"logged out"})
 
@@ -63,7 +64,7 @@ def new_user():
     user.hash_password(password)
     db.session.add(user)
     db.session.commit()
-    return jsonify({ 'status':True,'username': user.username,'firstname':user.firstname,'lastname':user.lastname,'contact':user.contactno,'email':user.email,'id':user.id })
+    return jsonify({ 'username': user.username,'firstname':user.firstname,'lastname':user.lastname,'contact':user.contactno,'email':user.email,'id':user.id }), 201
 
 #For updating User
 @app.route('/user/<id>',methods = ['PUT'])
@@ -157,7 +158,7 @@ def solve(id):
 
 
 #For Creating User Irrigation databases
-@app.route('/user/irrigation', methods = ['POST'])
+@app.route('/user/irrigation/<id>', methods = ['POST'])
 def create_irrigation(id):
     user = request.json.get('id')
     water_reserve_effective = request.json.get('EffectiveWaterReserve')
@@ -173,7 +174,6 @@ def create_irrigation(id):
 #for Updating User Databases
 @app.route('/user/irrigation/<id>', methods = ['PUT'])
 def update_irrigation(id):
-    #id = request.json.get('id')
     irrigation = Irrigations.query.filter_by(user = id).first()
     water_reserve_effective = request.json.get('EffectiveWaterReserve')
     water_reserve_maximum = request.json.get('MaximumWaterReserve')
@@ -188,45 +188,27 @@ def update_irrigation(id):
     return Irrigation_Schema.jsonify(irrigation)
 
 #Calculation of Irrigation Problem
-@app.route('/user/irrigation/calculation', methods = ['POST'])
-def irrigationOpti():
-    id = request.json.get('id')
+@app.route('/user/irrigation/calculation/<id>', methods = ['POST'])
+def irrigationOpti(id):
     crops = request.json.get('crops')
     areas = request.json.get('Area')
     drainage = request.json.get('Drainage')
-    stages = request.json.get('stages')
     Irrigation = Irrigations.query.filter_by(user = id).first()
     data =  {
         'crops':crops,
         'Area':areas,
         'ResW':Irrigation.water_reserve_effective,
-        'RainW':request.json.get('rainfall') if request.json.get('rainfall') else Irrigation.rainfall,
-        'RainWM':request.json.get('rainfall') if request.json.get('rainfall') else Irrigation.rainfall,
-        'SM':request.json.get('soilmoisture') if request.json.get('soilmoisture') else Irrigation.soil_moisture,
+        'RainW':Irrigation.rainfall,
+        'RainWM':Irrigation.rainfall,
+        'SM':Irrigation.soil_moisture,
         'DW':drainage,
-        'NW':[Neededwater(var,var2) for var,var2 in zip(crops,stages)],
-        'ResWM':Irrigation.water_reserve_maximum,
-        'IW':Irrigation.irrigationMax
+        'NW':[40,400],
+        'ResWM':600,
+        'IW':15000
     }
     result = IrrigationOptimize(data)
     return jsonify(result)
-@app.route('/database/crops', methods =['POST'])
-def update_crops():
-    Name = request.json.get('Name')
-    water_requirement = request.json.get('waterrequirement')
-    seedrequirement = request.json.get('seedrequirement')
-    humanrequirement = request.json.get('humanrequirement')
-    plantperarea = request.json.get('plantperarea')
-    rootdepth_seedling = request.json.get('rootdepth_seedling')
-    rootdepth_vegetative = request.json.get('rootdepth_vegetative')
-    rootdepth_flowing = request.json.get('rootdepth_flowing')
-    crop = Crops(Name=Name, water_requirement=water_requirement, seedrequirement=seedrequirement, humanrequirement=humanrequirement, plantperarea=plantperarea, rootdepth_flowing=rootdepth_flowing, rootdepth_seedling=rootdepth_seedling, rootdepth_vegetative=rootdepth_vegetative) 
-    db.session.add(crop)
-    db.session.commit()
 
-    return Crops_Schema.jsonify(crop)
-
-    
 #Run Server
 if __name__ == '__main__':
     db.create_all()
