@@ -85,57 +85,64 @@ def modify_user(id):
     return jsonify({ 'username': user.username,'firstname':user.firstname,'lastname':user.lastname,'contact':user.contactno,'email':user.email }), 201
 
 #To update data
-@app.route('/dairy/update/<id>',methods=["PUT"])
-def Dairy_update(id):
+@app.route('/dairy/update',methods=["PUT"])
+def Dairy_update():
+    print("function called")
+    print(request.json)
+    id= request.json.get("id")
     # if not request.json:
     #     abort(400)
-    if 'username' in session:
-        username=session['username']
-        data=request.json
-        # user=User.query.filter_by(id=id).first()
-        if Dairy.query.filter_by(user=id).first():
-            dairy=Dairy.query.filter_by(user=id)
-            for i in range(3):
-                j=0
-                dairy[i].milk=data[i][j]
-                j=j+1
-                dairy[i].ghee=data[i][j]
-                j=j+1
-                dairy[i].curd=data[i][j]
-                j=j+1
-                dairy[i].cheese=data[i][j]
+    #if 'username' in session:
+    #username=session['username']
+    data=[request.json.get("procost"), request.json.get("time"), request.json.get("manlabour")]
+    id= request.json.get("id")
+    print(request.json)
+    # user=User.query.filter_by(id=id).first()
+    if Dairy.query.filter_by(user=id).first():
+        dairy=Dairy.query.filter_by(user=id)
+        for i in range(3):
+            j=0
+            dairy[i].milk=data[i][j]
+            j=j+1
+            dairy[i].ghee=data[i][j]
+            j=j+1
+            dairy[i].curd=data[i][j]
+            j=j+1
+            dairy[i].cheese=data[i][j]
+        db.session.commit()
+        return jsonify({"message":True})
 
-            db.session.commit()
-            return jsonify(data)
+    else:
+        for i in range(3):
+            j=0
+            milk=data[i][j]
+            j=j+1
+            ghee=data[i][j]
+            j=j+1
+            curd=data[i][j]
+            j=j+1
+            cheese=data[i][j]
+            #j=j+1
+            #bound=data[i][j]
+            dairy=Dairy("Costraint",milk,ghee,curd,cheese,id)
+            db.session.add(dairy)
 
-        else:
-            for i in range(3):
-                j=0
-                milk=data[i][j]
-                j=j+1
-                ghee=data[i][j]
-                j=j+1
-                curd=data[i][j]
-                j=j+1
-                cheese=data[i][j]
-                #j=j+1
-                #bound=data[i][j]
-                dairy=Dairy("Costraint",milk,ghee,curd,cheese,id)
-                db.session.add(dairy)
+        db.session.commit()
+        return jsonify({"message":True})
 
-            db.session.commit()
-            return jsonify(data)
-
-        return jsonify({"message":"login please"})
+    return jsonify({"message":"login please"})
 
 #Implement
-@app.route('/dairy/solve/<id>',methods=['POST'])
-def solve(id):
+@app.route('/dairy/solve',methods=['POST'])
+def solve():
+    print("fucntion called")
+    id = request.json.get("id")
     data=request.json
     if request.json.get("profit"):
         if Dairy.query.filter_by(constraints="profit", user=id).first():
             todata=Dairy.query.filter_by(constraints="profit" , user=id).first()
             profit=request.json.get("profit")
+            print(profit)
             todata.milk=profit[0]
             todata.ghee=profit[1]
             todata.curd= profit[2]
@@ -153,6 +160,8 @@ def solve(id):
             db.session.commit()
 
     bound=request.json.get("bound")
+    #result = bound
+    #print(result)
     result=solve_dairy(id, bound)
     return jsonify(result)
 
@@ -194,16 +203,17 @@ def irrigationOpti():
     id = request.json.get('id')
     crops = request.json.get('crops')
     areas = request.json.get('Area')
-    drainage = request.json.get('Drainage')
+    areas = [float(var) for var in areas]
+    drainage = float(request.json.get('Drainage'))
     stages = request.json.get('stages')
     Irrigation = Irrigations.query.filter_by(user = id).first()
     data =  {
         'crops':crops,
         'Area':areas,
         'ResW':request.json.get('waterReserveEffective') if request.json.get('waterReserveEffective') else Irrigation.water_reserve_effective,
-        'RainW':[conversionValue(request.json.get('rainfall'),var,var2) for var,var2 in zip(crops,stages)]if request.json.get('rainfall') else [conversionRainwater(var,var2) for var,var2 in zip(crops,stages)],
-        'RainWM':[conversionValue(request.json.get('rainfall'),var,var2) for var,var2 in zip(crops,stages)] if request.json.get('rainfall') else [conversionRainwater(var,var2) for var,var2 in zip(crops,stages)],
-        'SM':[conversionValue(request.json.get('soilmoisture'),var,var2) for var,var2 in zip(crops,stages)] if request.json.get('soilmoisture') else [conversionSoilMoisture(var,var2) for var,var2 in zip(crops,stages)],
+        'RainW':[conversionValue(float(request.json.get('rainfall')),var2,var) for var,var2 in zip(crops,stages)]if request.json.get('rainfall') else [conversionRainwater(var,var2) for var,var2 in zip(crops,stages)],
+        'RainWM':[conversionValue(float(request.json.get('rainfall')),var2,var) for var,var2 in zip(crops,stages)] if request.json.get('rainfall') else [conversionRainwater(var,var2) for var,var2 in zip(crops,stages)],
+        'SM':[conversionValue(request.json.get('soilmoisture'),var2,var) for var,var2 in zip(crops,stages)] if request.json.get('soilmoisture') else [conversionSoilMoisture(var,var2) for var,var2 in zip(crops,stages)],
         'DW':drainage,
         'NW':[Neededwater(var,var2) for var,var2 in zip(crops,stages)],
         'ResWM':request.json.get('waterReserveMaximum') if request.json.get('waterReserveMaximum') else Irrigation.water_reserve_maximum,

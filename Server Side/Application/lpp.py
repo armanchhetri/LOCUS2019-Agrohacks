@@ -9,22 +9,22 @@ def solve_dairy(user_id, bound):
     x4 = LpVariable("x4",lowBound=0)
     cons=Dairy.query.filter_by(user=user_id)
 
-    prob+=cons[3].milk*x1 + cons[3].ghee*x2 + cons[3].curd*x3 + (cons[3].cheese/946.79)*x4
-    prob+=cons[0].milk*x1 + cons[0].ghee*x2 + cons[0].curd*x3 + (cons[0].cheese/946.79)*x4 <=bound[0]
-    prob+=cons[1].milk*x1 + cons[1].ghee*x2 + cons[1].curd*x3 + (cons[1].cheese/946.79)*x4 <=bound[1]
-    prob+=cons[2].milk*x1 + cons[2].ghee*x2 + cons[2].curd*x3 + (cons[2].cheese/946.79)*x4 <=bound[2]
-    prob+=1*x1 + 0*x2 + 0*x3 +0*x4 <=300
-    prob+=0*x1 + 1*x2 + 0*x3 +0*x4 <=200
-    prob+=0*x1 + 0*x2 + 1*x3 +0*x4 <=300
-    prob+=0*x1 + 0*x2 + 0*x3 +(1/946.79)*x4 <=15/946.79
+    prob+=cons[3].milk*x1 + cons[3].ghee*x2 + cons[3].curd*x3 + cons[3].cheese*x4
+    prob+=cons[0].milk*x1 + cons[0].ghee*x2 + cons[0].curd*x3 + cons[0].cheese*x4 <=bound[0]
+    prob+=cons[1].milk*x1 + cons[1].ghee*x2 + cons[1].curd*x3 + cons[1].cheese*x4 <=bound[1]
+    prob+=cons[2].milk*x1 + cons[2].ghee*x2 + cons[2].curd*x3 + cons[2].cheese*x4 <=bound[2]
+    prob+=1*x1 + 0*x2 + 0*x3 +0*x4 <=150
+    prob+=0*x1 + 1*x2 + 0*x3 +0*x4 <=105
+    prob+=0*x1 + 0*x2 + 1*x3 +0*x4 <=75
+    prob+=0*x1 + 0*x2 + 0*x3 +1*x4 <=58
 
     status=prob.solve()
     if LpStatus[status]=='Optimal':
         result=[value(x1),value(x2),value(x3),value(x4),value(prob.objective)]
-        return result
+        return result 
 
     else:
-        return "No optimal solution"
+        return False
 
 
 
@@ -46,7 +46,7 @@ def IrrigationOptimize(data):
     x1 = LpVariable(data['crops'][0])
     x2 = LpVariable(data['crops'][1])
     Lp_Problem += data['Area'][0] * x1 + data['Area'][1] * x2 <= data['IW']
-    Lp_Problem += x1 + x2 , "Z"
+    Lp_Problem += data['Area'][0]*x1 + data['Area'][1]*x2 , "Z"
     Lp_Problem += x1 >= data['ResW'] - data['RainW'][0] - data['SM'][0] + data['DW']
     Lp_Problem += x1 <= data['ResWM'] -data['RainW'][0] - data['SM'][0] + data['DW']
     Lp_Problem += data['RainWM'][0] + data['SM'][0] + x1 - data['DW'] >= data['NW'][0]
@@ -87,8 +87,8 @@ def Neededwater(crop,stages):
         valueCrop = Crops.query.filter_by(Name = crop).first()
         water = valueCrop.water_requirement
     except:
-        return 10
-    Neededwater =  water/1000
+        return 0.01
+    Neededwater =  water/10000
     rootdepth_seedling = valueCrop.rootdepth_seedling
     rootdepth_vegetative = valueCrop.rootdepth_vegetative
     rootdepth_flowing = valueCrop.rootdepth_flowing
@@ -104,8 +104,8 @@ def conversionSoilMoisture(crop,stages):
         valueCrop = Crops.query.filter_by(Name = crop).first()
         water = valueCrop.soil_moisture
     except:
-        return 10
-    Neededwater =  water/1000
+        return 0.01
+    Neededwater =  water/100000
     rootdepth_seedling = valueCrop.rootdepth_seedling
     rootdepth_vegetative = valueCrop.rootdepth_vegetative
     rootdepth_flowing = valueCrop.rootdepth_flowing
@@ -120,9 +120,11 @@ def conversionValue(value,stages,crop):
     try:
         valueCrop = Crops.query.filter_by(Name = crop).first()
         water = value
+        print(valueCrop.Name)
     except:
-        return value/2000
-    Neededwater =  water/1000
+        print(crop)
+        return value/35000
+    Neededwater =  water/10000
     rootdepth_seedling = valueCrop.rootdepth_seedling
     rootdepth_vegetative = valueCrop.rootdepth_vegetative
     rootdepth_flowing = valueCrop.rootdepth_flowing
@@ -138,8 +140,8 @@ def conversionRainwater(crop,stages):
         valueCrop = Crops.query.filter_by(Name = crop).first()
         water = valueCrop.rainfall
     except:
-        return 0.0
-    Neededwater =  water/1000
+        return 0.001
+    Neededwater =  water/10000
     rootdepth_seedling = valueCrop.rootdepth_seedling
     rootdepth_vegetative = valueCrop.rootdepth_vegetative
     rootdepth_flowing = valueCrop.rootdepth_flowing
