@@ -138,28 +138,32 @@ def solve():
     print("fucntion called")
     id = request.json.get("id")
     data=request.json
+    print("data arrived=")
+    print(data)
+    # abort(400)
     if request.json.get("profit"):
         if Dairy.query.filter_by(constraints="profit", user=id).first():
             todata=Dairy.query.filter_by(constraints="profit" , user=id).first()
             profit=request.json.get("profit")
+            profit=[int(var) for var in profit]
+            print("profit=")
             print(profit)
             todata.milk=profit[0]
             todata.ghee=profit[1]
             todata.curd= profit[2]
             todata.cheese=profit[3]
-            print("updated not")
+
             db.session.commit()
             print("updated now")
 
         else:
-            if data["profit"][0]==None:
-                abort(400)
-
-            profit=Dairy("profit",data["profit"][0],data["profit"][1],data["profit"][2],data["profit"][3],id)
-            db.session.add(profit)
+            profit=request.json.get("profit")
+            profit=[int(var) for var in profit]
+            profitadd=Dairy("profit",profit[0],profit[1],profit[2],profit[3],id)
+            db.session.add(profitadd)
             db.session.commit()
-
     bound=request.json.get("bound")
+    bound=[int(var) for var in bound]
     #result = bound
     #print(result)
     result=solve_dairy(id, bound)
@@ -231,13 +235,13 @@ def update_crops():
     rootdepth_seedling = request.json.get('rootdepth_seedling')
     rootdepth_vegetative = request.json.get('rootdepth_vegetative')
     rootdepth_flowing = request.json.get('rootdepth_flowing')
-    crop = Crops(Name=Name, water_requirement=water_requirement, seedrequirement=seedrequirement, humanrequirement=humanrequirement, plantperarea=plantperarea, rootdepth_flowing=rootdepth_flowing, rootdepth_seedling=rootdepth_seedling, rootdepth_vegetative=rootdepth_vegetative) 
+    crop = Crops(Name=Name, water_requirement=water_requirement, seedrequirement=seedrequirement, humanrequirement=humanrequirement, plantperarea=plantperarea, rootdepth_flowing=rootdepth_flowing, rootdepth_seedling=rootdepth_seedling, rootdepth_vegetative=rootdepth_vegetative)
     db.session.add(crop)
     db.session.commit()
 
     return Crops_Schema.jsonify(crop)
 
-    
+
 #Run Server
 if __name__ == '__main__':
     db.create_all()

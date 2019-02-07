@@ -1,160 +1,120 @@
-from pulp import *
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
+import os
+from passlib.apps import custom_app_context as pwd_context
 
-from model import User, Dairy, Crops
-def solve_dairy(user_id, bound):
-    prob = LpProblem("Dairy", LpMaximize)
-    x1 = LpVariable("x1",lowBound=0)
-    x2 = LpVariable("x2",lowBound=0)
-    x3 = LpVariable("x3",lowBound=0)
-    x4 = LpVariable("x4",lowBound=0)
-    cons=Dairy.query.filter_by(user=user_id)
+#Configuring Applicaton
+app = Flask(__name__)
+basedir = os.path.abspath(os.path.dirname(__file__))
 
-    prob+=cons[3].milk*x1 + cons[3].ghee*x2 + cons[3].curd*x3 + cons[3].cheese*x4
-    prob+=cons[0].milk*x1 + cons[0].ghee*x2 + cons[0].curd*x3 + cons[0].cheese*x4 <=bound[0]
-    prob+=cons[1].milk*x1 + cons[1].ghee*x2 + cons[1].curd*x3 + cons[1].cheese*x4 <=bound[1]
-    prob+=cons[2].milk*x1 + cons[2].ghee*x2 + cons[2].curd*x3 + cons[2].cheese*x4 <=bound[2]
-    prob+=1*x1 + 0*x2 + 0*x3 +0*x4 <=150
-    prob+=0*x1 + 1*x2 + 0*x3 +0*x4 <=105
-    prob+=0*x1 + 0*x2 + 1*x3 +0*x4 <=75
-    prob+=0*x1 + 0*x2 + 0*x3 +1*x4 <=58
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir,'db.sqlite')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    status=prob.solve()
-    if LpStatus[status]=='Optimal':
-        result=[value(x1),value(x2),value(x3),value(x4),value(prob.objective)]
-        return result 
+#Init Database
+db = SQLAlchemy(app)
+#Init Ma
+ma = Marshmallow(app)
 
-    else:
-        return False
+#Database Model
+class User(db.Model):
+    #__tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key = True)
+    firstname = db.Column(db.String(32))
+    lastname = db.Column(db.String(32))
+    username = db.Column(db.String(32), index = True)
+    password_hash = db.Column(db.String(128))
+    email = db.Column(db.String(32))
+    contactno = db.Column(db.String(10),nullable = False)
+    # location_id = db.C    olumn(db.Integer,db.ForeignKey('districts.id'))
+    # location = db.relationship('Districts')
+    districtName = db.Column(db.String(15),nullable = False)
+    dairy = db.relationship("Dairy", backref="users")
+    def hash_password(self, password):
+        self.password_hash = pwd_context.encrypt(password)
 
+    def verify_password(self, password):
+        return pwd_context.verify(password, self.password_hash)
 
+class Districts(db.Model):
+    #__tablename__ = 'districts'
+    id = db.Column(db.Integer, primary_key = True)
+    name = db.Column(db.String(15),nullable = False)
 
-def IrrigationOpti(Data):
-    Lp_Problem = LpProblem("Irrigaton Optimization",LpMinimize)
-    crops = []
-    for i in range(len(Data['Crops'])):
-        temp_variable = LpVariable(i)
-        crops.append(i)
-    Lp_Problem += [i in crops]
-    for i in range(len(crops)):
-        Lp_Problem += crops[i] >= data['ResW'] -data['RainW'] - data['SM'] + data['DW']
-        Lp_Problem += crops[i] <= data['ResWM'] -data['RainW'] - data['SM'] + data['DW']
-        Lp_Problem += data['RainWM'] + data['SW'] + crops[i] - data['DW'] >= data['NW']
-    pass
+#Marshmallow Serializer
+class UserSchema(ma.Schema):
+    class Meta:
+        fields = ['firstname','lastname','username','email','contactno','districtName']
 
-def IrrigationOptimize(data):
-    Lp_Problem = LpProblem("Irrigaton Optimization",LpMinimize)
-    x1 = LpVariable(data['crops'][0])
-    x2 = LpVariable(data['crops'][1])
-    Lp_Problem += data['Area'][0] * x1 + data['Area'][1] * x2 <= data['IW']
-    Lp_Problem += data['Area'][0]*x1 + data['Area'][1]*x2 , "Z"
-    Lp_Problem += x1 >= data['ResW'] - data['RainW'][0] - data['SM'][0] + data['DW']
-    Lp_Problem += x1 <= data['ResWM'] -data['RainW'][0] - data['SM'][0] + data['DW']
-    Lp_Problem += data['RainWM'][0] + data['SM'][0] + x1 - data['DW'] >= data['NW'][0]
-    Lp_Problem += x2 >= data['ResW'] -data['RainW'][1] - data['SM'][1] + data['DW']
-    Lp_Problem += x2 <= data['ResWM'] -data['RainW'][1] - data['SM'][1] + data['DW']
-    Lp_Problem += data['RainWM'][1] + data['SM'][1] + x2 - data['DW'] >= data['NW'][1]
-   # print(Lp_Problem)
-   # print(LpStatus[Lp_Problem.status])
-    Lp_Problem.solve()
-    ProblemStatus = LpStatus[Lp_Problem.status]
-    ObjectiveValue = pulp.value(Lp_Problem.objective)
-    variable = {}
-    totalVariable = {}
-    i=0
-    for var in Lp_Problem.variables():
-        variable[var.name] = var.varValue
-        totalVariable[var.name] = var.varValue * data['Area'][i]
-        i = i + 1
-    return ({'Status':ProblemStatus,'ObjectiveValue':ObjectiveValue,'Values':variable,'TotalValues':totalVariable })
+User_Schema = UserSchema(strict = True)
 
-data = {
-    'crops':['Alu','Peda'],
-    'Area':[400,700],
-    'ResW':200,
-    'RainW':15,
-    'RainWM':15,
-    'SM':12,
-    'DW':25,
-    'NW':[100,30],
-    'ResWM':400,
-    'IW':1200000
-}
+class Dairy(db.Model):
+    # __tablename__ = 'dairy'
 
-#IrrigationOptimize(data)
-
-def Neededwater(crop,stages):
-    try:
-        valueCrop = Crops.query.filter_by(Name = crop).first()
-        water = valueCrop.water_requirement
-    except:
-        return 0.01
-    Neededwater =  water/10000
-    rootdepth_seedling = valueCrop.rootdepth_seedling
-    rootdepth_vegetative = valueCrop.rootdepth_vegetative
-    rootdepth_flowing = valueCrop.rootdepth_flowing
-    if stages == 1:
-        return (Neededwater/rootdepth_flowing)
-    elif stages == 2:
-        return  (Neededwater/rootdepth_seedling)
-    else:
-        return (Neededwater/rootdepth_vegetative)
-
-def conversionSoilMoisture(crop,stages):
-    try:
-        valueCrop = Crops.query.filter_by(Name = crop).first()
-        water = valueCrop.soil_moisture
-    except:
-        return 0.01
-    Neededwater =  water/100000
-    rootdepth_seedling = valueCrop.rootdepth_seedling
-    rootdepth_vegetative = valueCrop.rootdepth_vegetative
-    rootdepth_flowing = valueCrop.rootdepth_flowing
-    if stages == 1:
-        return (Neededwater/rootdepth_flowing)
-    elif stages == 2:
-        return  (Neededwater/rootdepth_seedling)
-    else:
-        return (Neededwater/rootdepth_vegetative)
-
-def conversionValue(value,stages,crop):
-    try:
-        valueCrop = Crops.query.filter_by(Name = crop).first()
-        water = value
-        print(valueCrop.Name)
-    except:
-        print(crop)
-        return value/35000
-    Neededwater =  water/10000
-    rootdepth_seedling = valueCrop.rootdepth_seedling
-    rootdepth_vegetative = valueCrop.rootdepth_vegetative
-    rootdepth_flowing = valueCrop.rootdepth_flowing
-    if stages == 1:
-        return (Neededwater/rootdepth_flowing)
-    elif stages == 2:
-        return  (Neededwater/rootdepth_seedling)
-    else:
-        return (Neededwater/rootdepth_vegetative)
-
-def conversionRainwater(crop,stages):
-    try:
-        valueCrop = Crops.query.filter_by(Name = crop).first()
-        water = valueCrop.rainfall
-    except:
-        return 0.001
-    Neededwater =  water/10000
-    rootdepth_seedling = valueCrop.rootdepth_seedling
-    rootdepth_vegetative = valueCrop.rootdepth_vegetative
-    rootdepth_flowing = valueCrop.rootdepth_flowing
-    if stages == 1:
-        return (Neededwater/rootdepth_flowing)
-    elif stages == 2:
-        return  (Neededwater/rootdepth_seedling)
-    else:
-        return (Neededwater/rootdepth_vegetative)
+    id = db.Column(db.Integer, primary_key = True)
+    constraints=db.Column(db.String(32),nullable=False)
+    milk=db.Column(db.Integer,nullable=False)
+    ghee=db.Column(db.Integer,nullable=False)
+    curd=db.Column(db.Integer,nullable=False)
+    cheese=db.Column(db.Integer,nullable=False)
+    # bound=db.Column(db.Integer,nullable=False)
+    user = db.Column(db.Integer, db.ForeignKey("user.id"))
+    def __init__(self,constraints,milk,ghee,curd,cheese,user):
+        self.constraints=constraints
+        self.milk=milk
+        self.ghee=ghee
+        self.curd=curd
+        self.cheese=cheese
+        # self.bound=bound
+        self.user=user
 
 
-    
+class Irrigations(db.Model):
+    #__tablename__ = 'IrrigationModel'
+    id = db.Column(db.Integer, primary_key = True)
+    user = db.Column(db.Integer, db.ForeignKey("user.id"))
+    water_reserve_effective = db.Column(db.Float)
+    water_reserve_maximum = db.Column(db.Float)
+    irrigationMax = db.Column(db.Float)
+    soil_moisture = db.Column(db.Float)
+    rainfall = db.Column(db.Float)
 
-        
+    def needed_water(self):
+        pass
+    def irrigation_water(self):
+        pass
+    def __init__(self, water_reserve_effective,water_reserve_maximum,soil_moisture,rainfall,user):
+        self.user = user
+        self.water_reserve_effective = water_reserve_effective
+        self.water_reserve_maximum = water_reserve_maximum
+        self.soil_moisture = soil_moisture
+        self.rainfall = rainfall
+    def update(self, water_reserve_effective,water_reserve_maximum,soil_moisture,rainfall):
+        self.water_reserve_effective = water_reserve_effective
+        self.water_reserve_maximum = water_reserve_maximum
+        self.soil_moisture = soil_moisture
+        self.rainfall = rainfall
 
-   
+
+class IrrigationSchema(ma.Schema):
+    class Meta:
+        fields = ['water_reserve_effective','water_reserve_maximum','soil_moisture','rainfall']
+
+Irrigation_Schema = IrrigationSchema(strict = True)
+
+class Crops(db.Model):
+    id = db.Column(db.Integer,primary_key = True)
+    Name = db.Column(db.String(150),nullable = False)
+    water_requirement = db.Column(db.Float)
+    seedrequirement = db.Column(db.Float)
+    humanrequirement = db.Column(db.Integer)
+    plantperarea =  db.Column(db.Integer)
+    rootdepth_seedling = db.Column(db.Integer)
+    rootdepth_vegetative = db.Column(db.Integer)
+    rootdepth_flowing = db.Column(db.Integer)
+
+class CropsSchema(ma.Schema):
+    class Meta:
+        fields = ['Name','water_requirement','seedrequirement','humanrequirement','plantperarea','rootdepth_seedling','rootdepth_vegetative','rootdepth_flowing']
+
+Crops_Schema = CropsSchema(strict = True)

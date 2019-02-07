@@ -54,9 +54,9 @@ class Dairy(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     constraints=db.Column(db.String(32),nullable=False)
     milk=db.Column(db.Integer,nullable=False)
-    cheese=db.Column(db.Integer,nullable=False)
     ghee=db.Column(db.Integer,nullable=False)
     curd=db.Column(db.Integer,nullable=False)
+    cheese=db.Column(db.Integer,nullable=False)
     # bound=db.Column(db.Integer,nullable=False)
     user = db.Column(db.Integer, db.ForeignKey("user.id"))
     def __init__(self,constraints,milk,ghee,curd,cheese,user):
@@ -112,9 +112,9 @@ class Crops(db.Model):
     rootdepth_seedling = db.Column(db.Integer)
     rootdepth_vegetative = db.Column(db.Integer)
     rootdepth_flowing = db.Column(db.Integer)
-    
+
 class CropsSchema(ma.Schema):
     class Meta:
         fields = ['Name','water_requirement','seedrequirement','humanrequirement','plantperarea','rootdepth_seedling','rootdepth_vegetative','rootdepth_flowing']
-    
+
 Crops_Schema = CropsSchema(strict = True)
